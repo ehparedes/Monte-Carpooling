@@ -1,0 +1,61 @@
+{
+  "id": "/",
+  "name": "Carpooling Monte",
+  "short_name": "Monte",
+  "description": "Viajá en grupo, ahorrá dinero y conectate con tu comunidad en San Miguel del Monte y la Provincia de Buenos Aires.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF8F4",
+  "theme_color": "#1A8EA3",
+  "lang": "es-AR",
+  "orientation": "portrait",
+  "categories": ["travel", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "/images/logo-mark.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo-mark.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/logo-mark.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Buscar viaje",
+      "url": "/",
+      "icons": [{ "src": "/images/logo-mark.png", "sizes": "96x96" }],
+      "description": "Buscar un viaje disponible"
+    },
+    {
+      "name": "Publicar viaje",
+      "url": "/create-trip",
+      "icons": [{ "src": "/images/logo-mark.png", "sizes": "96x96" }],
+      "description": "Publicar un viaje como conductor"
+    }
+  ]
+}

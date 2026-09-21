@@ -1,0 +1,975 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: TownRide Carpooling API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User operations
+  - name: trips
+    description: Trip management
+  - name: bookings
+    description: Booking management
+  - name: chat
+    description: Chat messages
+  - name: ratings
+    description: Ratings and reviews
+  - name: admin
+    description: Admin operations
+  - name: storage
+    description: Object storage upload and serving endpoints.
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      operationId: getCurrentAuthUser
+      tags: [auth]
+      summary: Get current auth user
+      responses:
+        "200":
+          description: Current user auth state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCurrentAuthUserResponse"
+
+  /users/profile:
+    get:
+      operationId: getMyProfile
+      tags: [users]
+      summary: Get my profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateMyProfile
+      tags: [users]
+      summary: Update my profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{userId}:
+    get:
+      operationId: getUserById
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trips:
+    get:
+      operationId: searchTrips
+      tags: [trips]
+      summary: Search trips
+      parameters:
+        - name: origin
+          in: query
+          schema:
+            type: string
+        - name: destination
+          in: query
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of trips
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripListResponse"
+
+    post:
+      operationId: createTrip
+      tags: [trips]
+      summary: Create a trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTripBody"
+      responses:
+        "201":
+          description: Trip created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trips/{tripId}:
+    get:
+      operationId: getTripById
+      tags: [trips]
+      summary: Get trip by ID
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateTripStatus
+      tags: [trips]
+      summary: Update trip status
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTripStatusBody"
+      responses:
+        "200":
+          description: Updated trip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteTrip
+      tags: [trips]
+      summary: Delete a trip (admin)
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trips/my/driver:
+    get:
+      operationId: getMyDriverTrips
+      tags: [trips]
+      summary: Get my trips as driver
+      responses:
+        "200":
+          description: My driver trips
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bookings:
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Book a seat on a trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingBody"
+      responses:
+        "201":
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: No seats available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bookings/my:
+    get:
+      operationId: getMyBookings
+      tags: [bookings]
+      summary: Get my bookings as passenger
+      responses:
+        "200":
+          description: My bookings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bookings/{bookingId}/cancel:
+    patch:
+      operationId: cancelBooking
+      tags: [bookings]
+      summary: Cancel a booking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /chat/{tripId}/messages:
+    get:
+      operationId: getChatMessages
+      tags: [chat]
+      summary: Get chat messages for a trip
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Chat messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a chat message
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendChatMessageBody"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ratings:
+    post:
+      operationId: createRating
+      tags: [ratings]
+      summary: Submit a rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRatingBody"
+      responses:
+        "201":
+          description: Rating submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rating"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users:
+    get:
+      operationId: adminGetUsers
+      tags: [admin]
+      summary: Get all users (admin)
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserListResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{userId}:
+    delete:
+      operationId: adminDeleteUser
+      tags: [admin]
+      summary: Delete a user (admin)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/trips:
+    get:
+      operationId: adminGetTrips
+      tags: [admin]
+      summary: Get all trips (admin)
+      responses:
+        "200":
+          description: All trips
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripListResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /storage/uploads/request-url:
+    post:
+      tags: [storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    GetCurrentAuthUserResponse:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
+      required: [user]
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        profileImageUrl:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+      required: [id, username]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        replitUserId:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        isDriver:
+          type: boolean
+        isAdmin:
+          type: boolean
+        vehicleModel:
+          type: string
+          nullable: true
+        vehicleColor:
+          type: string
+          nullable: true
+        licensePlate:
+          type: string
+          nullable: true
+        totalSeats:
+          type: integer
+          nullable: true
+        acceptsPackages:
+          type: boolean
+        avgRating:
+          type: number
+          nullable: true
+        totalRatings:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - replitUserId
+        - username
+        - isDriver
+        - isAdmin
+        - acceptsPackages
+        - totalRatings
+        - createdAt
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        isDriver:
+          type: boolean
+        vehicleModel:
+          type: string
+        vehicleColor:
+          type: string
+        licensePlate:
+          type: string
+        totalSeats:
+          type: integer
+        acceptsPackages:
+          type: boolean
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+        driverId:
+          type: integer
+        origin:
+          type: string
+        destination:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        availableSeats:
+          type: integer
+        totalSeats:
+          type: integer
+        pricePerSeat:
+          type: number
+        meetingPoint:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        acceptsPackages:
+          type: boolean
+        driverName:
+          type: string
+          nullable: true
+        driverAvatarUrl:
+          type: string
+          nullable: true
+        driverRating:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - driverId
+        - origin
+        - destination
+        - date
+        - time
+        - availableSeats
+        - totalSeats
+        - pricePerSeat
+        - meetingPoint
+        - status
+        - acceptsPackages
+        - createdAt
+
+    TripDetail:
+      allOf:
+        - $ref: "#/components/schemas/Trip"
+        - type: object
+          properties:
+            bookings:
+              type: array
+              items:
+                $ref: "#/components/schemas/Booking"
+
+    TripListResponse:
+      type: object
+      properties:
+        trips:
+          type: array
+          items:
+            $ref: "#/components/schemas/Trip"
+      required: [trips]
+
+    CreateTripBody:
+      type: object
+      properties:
+        origin:
+          type: string
+        destination:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        availableSeats:
+          type: integer
+        pricePerSeat:
+          type: number
+        meetingPoint:
+          type: string
+        acceptsPackages:
+          type: boolean
+      required:
+        - origin
+        - destination
+        - date
+        - time
+        - availableSeats
+        - pricePerSeat
+        - meetingPoint
+
+    UpdateTripStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+      required: [status]
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        passengerId:
+          type: integer
+        status:
+          type: string
+          enum: [confirmed, cancelled]
+        seatsBooked:
+          type: integer
+        passengerName:
+          type: string
+          nullable: true
+        passengerAvatarUrl:
+          type: string
+          nullable: true
+        trip:
+          $ref: "#/components/schemas/Trip"
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - passengerId
+        - status
+        - seatsBooked
+        - createdAt
+
+    BookingListResponse:
+      type: object
+      properties:
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+      required: [bookings]
+
+    CreateBookingBody:
+      type: object
+      properties:
+        tripId:
+          type: integer
+        seatsBooked:
+          type: integer
+      required: [tripId, seatsBooked]
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        senderId:
+          type: integer
+        senderName:
+          type: string
+          nullable: true
+        senderAvatarUrl:
+          type: string
+          nullable: true
+        message:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - senderId
+        - message
+        - createdAt
+
+    ChatMessageListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+      required: [messages]
+
+    SendChatMessageBody:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    Rating:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        raterId:
+          type: integer
+        ratedUserId:
+          type: integer
+        stars:
+          type: integer
+        comment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - raterId
+        - ratedUserId
+        - stars
+        - createdAt
+
+    CreateRatingBody:
+      type: object
+      properties:
+        tripId:
+          type: integer
+        ratedUserId:
+          type: integer
+        stars:
+          type: integer
+        comment:
+          type: string
+      required: [tripId, ratedUserId, stars]
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        replitUserId:
+          type: string
+        username:
+          type: string
+        isDriver:
+          type: boolean
+        isAdmin:
+          type: boolean
+        totalRatings:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - replitUserId
+        - username
+        - isDriver
+        - isAdmin
+        - totalRatings
+        - createdAt
+
+    AdminUserListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+      required: [users]
+
+    ExchangeMobileAuthorizationCodeBody:
+      type: object
+      properties:
+        code:
+          type: string
+        code_verifier:
+          type: string
+        redirect_uri:
+          type: string
+        state:
+          type: string
+        nonce:
+          type: string
+          nullable: true
+      required: [code, code_verifier, redirect_uri, state]
+
+    ExchangeMobileAuthorizationCodeResponse:
+      type: object
+      properties:
+        token:
+          type: string
+      required: [token]
+
+    LogoutMobileSessionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/UploadUrlRequest'

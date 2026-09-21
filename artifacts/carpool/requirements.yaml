@@ -1,0 +1,19 @@
+packages:
+  "framer-motion": "Smooth animations and page transitions"
+  "date-fns": "Formatting dates and times beautifully"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+  "@hookform/resolvers": "Zod validation for forms"
+
+images:
+  - path: "artifacts/carpool/public/images/hero-bg.png"
+    description: "Warm earthy abstract gradient with soft natural shapes in terracotta, forest green, and golden yellow, minimal modern style"
+    aspect_ratio: "9:16"
+  - path: "artifacts/carpool/public/images/logo-mark.png"
+    description: "Minimalist geometric logo of two abstract cars merging or a winding road, warm orange and green colors, transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - TownRide uses Replit Auth. User must be authenticated to use the app.
+  - Assume all React Query hooks are available in @workspace/api-client-react.
+  - Bottom navigation bar is sticky at the bottom for mobile-first feel.

@@ -1,0 +1,45 @@
+{
+  "packageId": "app.monte.carpooling",
+  "host": "monte-carpooling.replit.app",
+  "name": "Carpooling Monte",
+  "launcherName": "Monte",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#1A8EA3",
+  "navigationColor": "#0a1219",
+  "navigationColorDark": "#0a1219",
+  "navigationDividerColor": "#1A8EA3",
+  "navigationDividerColorDark": "#1A8EA3",
+  "backgroundColor": "#0a1219",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://monte-carpooling.replit.app/icon-512.png",
+  "maskableIconUrl": "https://monte-carpooling.replit.app/icon-512.png",
+  "monochromeIconUrl": "https://monte-carpooling.replit.app/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "monte-carpooling"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://monte-carpooling.replit.app/manifest.json",
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://monte-carpooling.replit.app/",
+  "minSdkVersion": 21,
+  "targetSdkVersion": 34,
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "enableSiteSettingsShortcut": true,
+  "fallbackType": "customtabs",
+  "serviceAccountJsonFile": "./service-account.json"
+}

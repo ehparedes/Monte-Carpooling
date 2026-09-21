@@ -1,0 +1,71 @@
+Act as a Senior Full-stack Developer and UX Expert. Create a complete mobile-first carpooling application (PWA) designed for small towns (population <20,000).
+
+TECH STACK:
+
+    Frontend: React (Vite) + Tailwind CSS + Lucide React (Icons).
+
+    Backend: Node.js with Express.
+
+    Database: PostgreSQL (using Replit's managed DB).
+
+    Maps: Leaflet.js with OpenStreetMap (No Google Maps API).
+
+    Authentication: Email/Password and Google Login (using Passport.js or Supabase Auth if preferred).
+
+CORE LOGIC & SAFETY:
+
+    Meeting Points: Instead of complex GPS, use a dropdown/list of predefined "Meeting Points" (Town Square, Hospital, Bus Station, Gas Station).
+
+    Booking Guard: The system MUST prevent booking if available_seats is 0.
+
+    Trip States: Trips must have a status: scheduled, in_progress, completed, or cancelled.
+
+APP FEATURES:
+
+    USER & VEHICLE PROFILE:
+
+    Registration, login, and profile photo (use placeholder URLs initially).
+
+    Drivers must register vehicle details: Model, Color, License Plate, and Total Seats.
+
+    TRIP MANAGEMENT (DRIVERS):
+
+    Create trips specifying: Origin town, Destination town, Date, Time, Available seats, Price per seat, and Meeting Point.
+
+    BOOKING SYSTEM (PASSENGERS):
+
+    Search by origin, destination, and date.
+
+    Book seat: This must decrement available_seats in the database and create a record in bookings.
+
+    Visual confirmation of booking with a summary.
+
+    COMMUNICATION & FEEDBACK:
+
+    Chat: Basic real-time chat between driver and passenger for each specific trip.
+
+    Ratings: 1-5 star rating system after trip completion status.
+
+    EXTRAS:
+
+    Package Delivery: Toggle for drivers to accept small packages.
+
+    Admin Panel: Simple view to manage users and delete fraudulent trips.
+
+USER EXPERIENCE (UX) REQUIREMENTS:
+
+    Rural Optimization: High contrast colors, large buttons (min 44px touch targets), and minimal text.
+
+    Navigation: Bottom navigation bar for mobile (Home, My Trips, Chat, Profile).
+
+    Responsive: Ensure it looks like a native app when saved as a PWA on a smartphone.
+
+OUTPUT:
+Generate the full project structure. Start with the database schema (Prisma or SQL), then the API routes, and finally the React components. Ensure all components are modular and clean.
+Un par de consejos antes de empezar:
+
+    Paso a paso: Si ves que Replit se detiene, dile: "Continue with the Trip Details component" o "Now implement the Chat logic".
+
+    Base de Datos: Al usar PostgreSQL en Replit, él configurará las variables de entorno automáticamente, lo cual te ahorra mucho dolor de cabeza.
+
+    Imágenes: Como las imágenes de perfil son pesadas, dile al principio que use DiceBear Avatars (una API de avatars gratuita) para que todos los usuarios tengan una foto sin que tú tengas que subir nada.

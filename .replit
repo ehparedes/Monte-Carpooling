@@ -1,0 +1,38 @@
+modules = ["nodejs-24", "postgresql-16"]
+
+  [[artifacts]]
+  id = "artifacts/api-server"
+
+  [[artifacts]]
+  id = "artifacts/mockup-sandbox"
+
+  [deployment]
+  router = "application"
+  deploymentTarget = "vm"
+  run = ["bash", "start.sh"]
+  build = ["bash", "-c", "BASE_PATH=/ PORT=3000 pnpm --filter @workspace/carpool run build && pnpm --filter @workspace/api-server run build"]
+
+  [workflows]
+  runButton = "Project"
+
+  [agent]
+  stack = "PNPM_WORKSPACE"
+expertMode = true
+
+  [postMerge]
+  path = "scripts/post-merge.sh"
+  timeoutMs = 20000
+
+  [userenv]
+
+  [userenv.shared]
+  VAPID_PUBLIC_KEY = "BG495YXGVHHVJpcb8_TWyXxtJUiXUZnLzKVbScaHcC38PcIezgoCCoYTjsU3ZreVB6ARwinbk05U_YH5CSioFnQ"
+  VAPID_PRIVATE_KEY = "t4Hl2AQhUzoEBBdIrmIA0s_8MPRvq4SZnaRayDzfXbo"
+  VAPID_SUBJECT = "mailto:admin@montecarpooling.ar"
+
+  [nix]
+  channel = "stable-25_05"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-9f45a108-e0f6-44bf-a9e6-fc95415bfd6f"
+  

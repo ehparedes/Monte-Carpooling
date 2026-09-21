@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.monte.carpooling",
+      "sha256_cert_fingerprints": [
+        "0C:8E:E6:06:3F:37:04:50:E9:1D:5E:03:A5:FA:EA:16:0A:12:AF:9C:25:B2:29:2D:B4:F9:60:EF:37:80:FD:65"
+      ]
+    }
+  }
+]

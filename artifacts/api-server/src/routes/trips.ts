@@ -1,0 +1,230 @@
+import { Router, type IRouter } from "express";
+import { db } from "@workspace/db";
+import { profilesTable, tripsTable, bookingsTable, ratingsTable } from "@workspace/db/schema";
+import { eq, and, sql, avg, or } from "drizzle-orm";
+
+const router: IRouter = Router();
+
+async function tripWithDriverInfo(trip: typeof tripsTable.$inferSelect) {
+  const driver = await db.select().from(profilesTable).where(eq(profilesTable.id, trip.driverId)).limit(1);
+  const driverProfile = driver[0];
+
+  const ratingResult = await db
+    .select({ avg: avg(ratingsTable.stars) })
+    .from(ratingsTable)
+    .where(eq(ratingsTable.ratedUserId, trip.driverId));
+
+  return {
+    ...trip,
+    pricePerSeat: parseFloat(trip.pricePerSeat),
+    driverName: driverProfile ? `${driverProfile.firstName ?? ""} ${driverProfile.lastName ?? ""}`.trim() || driverProfile.username : null,
+    driverAvatarUrl: driverProfile?.avatarUrl ?? null,
+    driverPhone: driverProfile?.phone ?? null,
+    driverRating: ratingResult[0]?.avg ? parseFloat(ratingResult[0].avg) : null,
+    createdAt: trip.createdAt.toISOString(),
+  };
+}
+
+router.get("/trips", async (req, res) => {
+  const { origin, destination, date, status } = req.query;
+
+  let query = db.select().from(tripsTable).$dynamic();
+
+  const conditions = [];
+  if (origin && typeof origin === "string") conditions.push(eq(tripsTable.origin, origin));
+  if (destination && typeof destination === "string") conditions.push(eq(tripsTable.destination, destination));
+  if (date && typeof date === "string") conditions.push(eq(tripsTable.date, date));
+  if (status && typeof status === "string") {
+    conditions.push(eq(tripsTable.status, status as "scheduled" | "in_progress" | "completed" | "cancelled"));
+  } else {
+    conditions.push(eq(tripsTable.status, "scheduled"));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  const trips = await query.orderBy(sql`${tripsTable.date} ASC, ${tripsTable.time} ASC`);
+  const tripsWithInfo = await Promise.all(trips.map(tripWithDriverInfo));
+
+  res.json({ trips: tripsWithInfo });
+});
+
+router.get("/trips/my/driver", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const profile = await db.select().from(profilesTable).where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
+  if (profile.length === 0) {
+    res.json({ trips: [] });
+    return;
+  }
+
+  const trips = await db.select().from(tripsTable)
+    .where(eq(tripsTable.driverId, profile[0].id))
+    .orderBy(sql`${tripsTable.date} DESC`);
+
+  const tripsWithInfo = await Promise.all(trips.map(async (trip) => {
+    const base = await tripWithDriverInfo(trip);
+
+    const pendingBookingsRaw = await db.select().from(bookingsTable)
+      .where(and(eq(bookingsTable.tripId, trip.id), eq(bookingsTable.status, "pending")));
+
+    const pendingBookings = await Promise.all(pendingBookingsRaw.map(async (b) => {
+      const passenger = await db.select().from(profilesTable).where(eq(profilesTable.id, b.passengerId)).limit(1);
+      const p = passenger[0];
+      return {
+        id: b.id,
+        passengerId: b.passengerId,
+        passengerName: p ? (`${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || p.username) : "Usuario",
+        passengerAvatarUrl: p?.avatarUrl ?? null,
+        seatsBooked: b.seatsBooked,
+        createdAt: b.createdAt.toISOString(),
+      };
+    }));
+
+    const confirmedBookingsRaw = await db.select().from(bookingsTable)
+      .where(and(eq(bookingsTable.tripId, trip.id), eq(bookingsTable.status, "confirmed")));
+
+    const confirmedPassengers = await Promise.all(confirmedBookingsRaw.map(async (b) => {
+      const passenger = await db.select().from(profilesTable).where(eq(profilesTable.id, b.passengerId)).limit(1);
+      const p = passenger[0];
+      return {
+        id: b.id,
+        passengerId: b.passengerId,
+        passengerName: p ? (`${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || p.username) : "Usuario",
+        passengerAvatarUrl: p?.avatarUrl ?? null,
+        seatsBooked: b.seatsBooked,
+      };
+    }));
+
+    return { ...base, pendingBookings, confirmedPassengers };
+  }));
+
+  res.json({ trips: tripsWithInfo });
+});
+
+router.get("/trips/:tripId", async (req, res) => {
+  const tripId = parseInt(req.params.tripId);
+  if (isNaN(tripId)) {
+    res.status(400).json({ error: "Invalid trip ID" });
+    return;
+  }
+
+  const trip = await db.select().from(tripsTable).where(eq(tripsTable.id, tripId)).limit(1);
+  if (trip.length === 0) {
+    res.status(404).json({ error: "Trip not found" });
+    return;
+  }
+
+  const bookings = await db.select().from(bookingsTable).where(
+    and(eq(bookingsTable.tripId, tripId), or(eq(bookingsTable.status, "confirmed"), eq(bookingsTable.status, "pending")))
+  );
+
+  const bookingsWithPassengers = await Promise.all(bookings.map(async (b) => {
+    const passenger = await db.select().from(profilesTable).where(eq(profilesTable.id, b.passengerId)).limit(1);
+    return {
+      ...b,
+      passengerName: passenger[0] ? `${passenger[0].firstName ?? ""} ${passenger[0].lastName ?? ""}`.trim() || passenger[0].username : null,
+      passengerAvatarUrl: passenger[0]?.avatarUrl ?? null,
+      createdAt: b.createdAt.toISOString(),
+    };
+  }));
+
+  const tripWithInfo = await tripWithDriverInfo(trip[0]);
+  res.json({ ...tripWithInfo, bookings: bookingsWithPassengers });
+});
+
+router.post("/trips", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const profile = await db.select().from(profilesTable).where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
+  if (profile.length === 0 || !profile[0].isDriver) {
+    res.status(403).json({ error: "Only drivers can create trips" });
+    return;
+  }
+
+  const { origin, destination, date, time, availableSeats, pricePerSeat, priceType, meetingPoint, acceptsPackages } = req.body;
+  const resolvedPriceType: "fixed" | "free" | "optional" = ["fixed", "free", "optional"].includes(priceType) ? priceType : "fixed";
+  const resolvedPrice = resolvedPriceType === "fixed" ? (pricePerSeat ?? 0).toString() : "0";
+
+  const inserted = await db.insert(tripsTable).values({
+    driverId: profile[0].id,
+    origin,
+    destination,
+    date,
+    time,
+    availableSeats: parseInt(availableSeats),
+    totalSeats: parseInt(availableSeats),
+    pricePerSeat: resolvedPrice,
+    priceType: resolvedPriceType,
+    meetingPoint,
+    acceptsPackages: acceptsPackages ?? false,
+    status: "scheduled",
+  }).returning();
+
+  res.status(201).json(await tripWithDriverInfo(inserted[0]));
+});
+
+router.patch("/trips/:tripId", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const tripId = parseInt(req.params.tripId);
+  if (isNaN(tripId)) {
+    res.status(400).json({ error: "Invalid trip ID" });
+    return;
+  }
+
+  const trip = await db.select().from(tripsTable).where(eq(tripsTable.id, tripId)).limit(1);
+  if (trip.length === 0) {
+    res.status(404).json({ error: "Trip not found" });
+    return;
+  }
+
+  const profile = await db.select().from(profilesTable).where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
+  if (profile.length === 0 || (profile[0].id !== trip[0].driverId && !profile[0].isAdmin)) {
+    res.status(403).json({ error: "Not authorized" });
+    return;
+  }
+
+  const { status } = req.body;
+  const updated = await db.update(tripsTable)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(tripsTable.id, tripId))
+    .returning();
+
+  res.json(await tripWithDriverInfo(updated[0]));
+});
+
+router.delete("/trips/:tripId", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const tripId = parseInt(req.params.tripId);
+  if (isNaN(tripId)) {
+    res.status(400).json({ error: "Invalid trip ID" });
+    return;
+  }
+
+  const profile = await db.select().from(profilesTable).where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
+  if (profile.length === 0 || !profile[0].isAdmin) {
+    res.status(403).json({ error: "Admin access required" });
+    return;
+  }
+
+  await db.delete(tripsTable).where(eq(tripsTable.id, tripId));
+  res.json({ success: true });
+});
+
+export { tripWithDriverInfo };
+export default router;

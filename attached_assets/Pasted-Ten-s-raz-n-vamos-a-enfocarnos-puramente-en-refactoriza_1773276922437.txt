@@ -1,0 +1,40 @@
+Tenés razón, vamos a enfocarnos puramente en refactorizar y mejorar lo que ya tenés desplegado en Replit, sin romper la base que ya funciona.
+
+Para que el Replit Agent no intente empezar de cero, usá este prompt de "Refactorización y Mejora". Está diseñado para que analice tus archivos actuales y aplique las capas de diseño, seguridad y reputación encima.
+Prompt de Mejora para Carpooling Monte
+
+Basado en el código actual de la aplicación, realiza las siguientes mejoras específicas sin alterar la funcionalidad base que ya está operativa:
+
+1. MEJORA DE UI/UX (DISEÑO PROFESIONAL):
+
+    Estilo Visual: Aplicá un diseño "Premium" usando Tailwind CSS. Cambiá los fondos grises por un blanco limpio (bg-slate-50), usá tarjetas con bordes muy redondeados (rounded-2xl) y sombras sutiles (shadow-sm).
+
+    Botones: Rediseñá los botones principales con un Azul Cobalto (bg-blue-700) y estados de hover suaves. El botón de "Publicar" debe destacar.
+
+    Navegación: Si no existe, implementá una barra de navegación inferior (Bottom Nav) fija para móviles con iconos de Lucide (Inicio, Mis Viajes, Mensajes, Perfil).
+
+2. ACTUALIZACIÓN DE SEGURIDAD Y PERFIL:
+
+    Campo DNI: Modificá el esquema de la base de datos y el formulario de registro/perfil para incluir el campo DNI (obligatorio).
+
+    Reputación (Rating): Agregá una tabla de Reviews. Al finalizar un viaje, habilitá una sección para que el pasajero califique al conductor y viceversa (1 a 5 estrellas + comentario corto).
+
+    Visualización de Estrellas: Mostrá el promedio de estrellas en las tarjetas de viaje (ej: "⭐ 4.8").
+
+3. INTEGRACIÓN LOCAL Y COMUNICACIÓN:
+
+    WhatsApp: En la vista de "Detalles del Viaje" una vez reservado, agregá un botón verde de WhatsApp que abra un chat directo con el otro usuario. Mensaje predefinido: "Hola, te escribo desde Carpooling Monte por el viaje de [Origen] a [Destino]...".
+
+    Ubicación: Agregá un botón de "Compartir mi ubicación" que genere un link de Google Maps con las coordenadas actuales del usuario para enviarlo por seguridad.
+
+4. REFINAMIENTO DE LOCALIDADES (MONTE Y ZONA):
+
+    Asegurá que los selectores de Origen/Destino den prioridad a: San Miguel del Monte, Abbott, Videla Dorna, Cañuelas, Lobos, Las Flores, General Belgrano, Ranchos, Brandsen, La Plata y CABA.
+
+    Puntos de encuentro por defecto: Plaza Alsina, Terminal, YPF Ruta 3, Rotonda de acceso, La Comu y Hospital.
+
+5. IDIOMA Y MONEDA:
+
+    Revisá que todos los textos estén en Español (Argentina), la moneda en $ ARS y las fechas en DD/MM/AAAA.
+
+Por favor, aplicá estos cambios de forma incremental para asegurar que la app siga siendo funcional en todo momento.
