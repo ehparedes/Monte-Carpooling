@@ -3,8 +3,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { IncomingMessage } from "http";
 import type { Server } from "http";
 import { db } from "@workspace/db";
-import { profilesTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { profilesTable, tripsTable, bookingsTable } from "@workspace/db/schema";
+import { and, eq } from "drizzle-orm";
 
 interface AuthedWebSocket extends WebSocket {
   profileId?: number;
@@ -60,6 +60,25 @@ export function setupChatWs(server: Server) {
 
     if (profile.length === 0) {
       rawWs.close(1008, "Profile not found");
+      return;
+    }
+
+    // Solo el conductor o un pasajero con reserva confirmada (mismo criterio que chat.ts)
+    const profileId = profile[0].id;
+    const [trip] = await db.select({ driverId: tripsTable.driverId }).from(tripsTable)
+      .where(eq(tripsTable.id, tripId)).limit(1);
+    let allowed = !!trip && trip.driverId === profileId;
+    if (!allowed && trip) {
+      const booking = await db.select({ tripId: bookingsTable.tripId }).from(bookingsTable)
+        .where(and(
+          eq(bookingsTable.tripId, tripId),
+          eq(bookingsTable.passengerId, profileId),
+          eq(bookingsTable.status, "confirmed"),
+        )).limit(1);
+      allowed = booking.length > 0;
+    }
+    if (!allowed) {
+      rawWs.close(1008, "Forbidden");
       return;
     }
 
