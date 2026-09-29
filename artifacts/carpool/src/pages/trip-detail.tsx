@@ -230,6 +230,24 @@ export default function TripDetail() {
 
         <TripCard trip={tripDetail} hideBookButton />
 
+        {((tripDetail as any).vehicleModel || (tripDetail as any).vehicleColor || (tripDetail as any).licensePlate) && (
+          <div className="mt-4 bg-card border border-border rounded-2xl p-4">
+            <p className="text-xs font-semibold text-muted-foreground">Vehículo</p>
+            {((tripDetail as any).vehicleModel || (tripDetail as any).vehicleColor) && (
+              <p className="font-bold text-foreground mt-0.5">
+                {[(tripDetail as any).vehicleModel, (tripDetail as any).vehicleColor].filter(Boolean).join(", ")}
+              </p>
+            )}
+            {(tripDetail as any).licensePlate ? (
+              <p className="text-sm text-foreground mt-1">
+                Patente: <span className="font-mono font-bold tracking-wider">{(tripDetail as any).licensePlate}</span>
+              </p>
+            ) : !isDriver ? (
+              <p className="text-xs text-muted-foreground mt-1">La patente se muestra cuando tu reserva está confirmada.</p>
+            ) : null}
+          </div>
+        )}
+
         {/* Botón ver perfil del conductor (solo para pasajeros) */}
         {!isDriver && (
           <button
@@ -253,8 +271,8 @@ export default function TripDetail() {
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mt-4 flex gap-3 items-start">
           <ShieldCheck className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-bold text-blue-800">Conductor verificado</h4>
-            <p className="text-sm text-blue-700/80 mt-1">La identidad y los datos del vehículo fueron validados por Carpooling Monte.</p>
+            <h4 className="font-bold text-blue-800">Comunidad de vecinos</h4>
+            <p className="text-sm text-blue-700/80 mt-1">Todos los usuarios entraron por invitación de otro vecino. Antes de viajar, revisá el perfil y las calificaciones del conductor.</p>
           </div>
         </div>
 

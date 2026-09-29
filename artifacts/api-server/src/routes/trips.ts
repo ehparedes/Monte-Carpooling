@@ -5,6 +5,11 @@ import { eq, and, sql, avg, or } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+// Teléfono y patente solo para el conductor, sus pasajeros confirmados y admins.
+function hidePrivateDriverData<T extends object>(t: T): T {
+  return { ...t, driverPhone: null, licensePlate: null };
+}
+
 async function tripWithDriverInfo(trip: typeof tripsTable.$inferSelect) {
   const driver = await db.select().from(profilesTable).where(eq(profilesTable.id, trip.driverId)).limit(1);
   const driverProfile = driver[0];
@@ -20,6 +25,9 @@ async function tripWithDriverInfo(trip: typeof tripsTable.$inferSelect) {
     driverName: driverProfile ? `${driverProfile.firstName ?? ""} ${driverProfile.lastName ?? ""}`.trim() || driverProfile.username : null,
     driverAvatarUrl: driverProfile?.avatarUrl ?? null,
     driverPhone: driverProfile?.phone ?? null,
+    vehicleModel: driverProfile?.vehicleModel ?? null,
+    vehicleColor: driverProfile?.vehicleColor ?? null,
+    licensePlate: driverProfile?.licensePlate ?? null,
     driverRating: ratingResult[0]?.avg ? parseFloat(ratingResult[0].avg) : null,
     createdAt: trip.createdAt.toISOString(),
   };
@@ -47,7 +55,7 @@ router.get("/trips", async (req, res) => {
   const trips = await query.orderBy(sql`${tripsTable.date} ASC, ${tripsTable.time} ASC`);
   const tripsWithInfo = await Promise.all(trips.map(tripWithDriverInfo));
 
-  res.json({ trips: tripsWithInfo });
+  res.json({ trips: tripsWithInfo.map(hidePrivateDriverData) });
 });
 
 router.get("/trips/my/driver", async (req, res) => {
@@ -134,7 +142,17 @@ router.get("/trips/:tripId", async (req, res) => {
   }));
 
   const tripWithInfo = await tripWithDriverInfo(trip[0]);
-  res.json({ ...tripWithInfo, bookings: bookingsWithPassengers });
+  let canSeePrivate = false;
+  if (req.isAuthenticated()) {
+    const [viewer] = await db.select().from(profilesTable)
+      .where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
+    if (viewer) {
+      canSeePrivate = viewer.isAdmin || viewer.id === trip[0].driverId ||
+        bookings.some((b) => b.passengerId === viewer.id && b.status === "confirmed");
+    }
+  }
+  const safeTrip = canSeePrivate ? tripWithInfo : hidePrivateDriverData(tripWithInfo);
+  res.json({ ...safeTrip, bookings: bookingsWithPassengers });
 });
 
 router.post("/trips", async (req, res) => {
