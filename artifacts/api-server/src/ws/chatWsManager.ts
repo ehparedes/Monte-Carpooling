@@ -1,3 +1,4 @@
+import { getSession, SESSION_COOKIE } from "../lib/auth";
 import { WebSocketServer, WebSocket } from "ws";
 import type { IncomingMessage } from "http";
 import type { Server } from "http";
@@ -44,10 +45,12 @@ export function setupChatWs(server: Server) {
 
     const url = new URL(req.url ?? "/", "http://localhost");
     const tripId = parseInt(url.searchParams.get("tripId") ?? "");
-    const replitUserId = url.searchParams.get("userId");
+    const sid = getSidFromUpgrade(req, url);
+    const session = sid ? await getSession(sid) : null;
+    const replitUserId = session?.user?.id;
 
     if (isNaN(tripId) || !replitUserId) {
-      rawWs.close(1008, "Missing tripId or userId");
+      rawWs.close(1008, "Unauthorized");
       return;
     }
 
@@ -77,4 +80,14 @@ export function setupChatWs(server: Server) {
   });
 
   console.log("WebSocket chat server ready at /ws/chat");
+}
+
+
+function getSidFromUpgrade(req: IncomingMessage, url: URL): string | undefined {
+  const cookieHeader = req.headers.cookie ?? "";
+  for (const part of cookieHeader.split(";")) {
+    const [k, ...v] = part.trim().split("=");
+    if (k === SESSION_COOKIE) return decodeURIComponent(v.join("="));
+  }
+  return url.searchParams.get("token") ?? undefined;
 }

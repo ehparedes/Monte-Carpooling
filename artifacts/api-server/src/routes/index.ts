@@ -10,7 +10,6 @@ import adminRouter from "./admin";
 import pushRouter from "./push";
 import tripRequestsRouter from "./trip-requests";
 import storageRouter from "./storage";
-import testAuthRouter from "./test-auth";
 
 const router: IRouter = Router();
 
@@ -25,6 +24,5 @@ router.use(adminRouter);
 router.use(pushRouter);
 router.use(tripRequestsRouter);
 router.use(storageRouter);
-router.use(testAuthRouter);
 
 export default router;

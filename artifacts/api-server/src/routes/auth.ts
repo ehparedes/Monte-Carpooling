@@ -73,8 +73,8 @@ async function upsertUser(claims: Record<string, unknown>) {
   const userData = {
     id: claims.sub as string,
     email: (claims.email as string) || null,
-    firstName: (claims.first_name as string) || null,
-    lastName: (claims.last_name as string) || null,
+    firstName: ((claims.given_name ?? claims.first_name) as string) || null,
+    lastName: ((claims.family_name ?? claims.last_name) as string) || null,
     profileImageUrl: (claims.profile_image_url || claims.picture) as string | null,
   };
 
@@ -114,10 +114,10 @@ router.get("/login", async (req: Request, res: Response) => {
 
   const redirectTo = oidc.buildAuthorizationUrl(config, {
     redirect_uri: callbackUrl,
-    scope: "openid email profile offline_access",
+    scope: "openid email profile",
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
-    prompt: "login consent",
+    prompt: "select_account",
     state,
     nonce,
   });
@@ -191,7 +191,7 @@ router.get("/callback", async (req: Request, res: Response) => {
     },
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
-    expires_at: tokens.expiresIn() ? now + tokens.expiresIn()! : claims.exp,
+    expires_at: now + Math.floor(SESSION_TTL / 1000),
   };
 
   const sid = await createSession(sessionData);
@@ -200,18 +200,9 @@ router.get("/callback", async (req: Request, res: Response) => {
 });
 
 router.get("/logout", async (req: Request, res: Response) => {
-  const config = await getOidcConfig();
-  const origin = getOrigin(req);
-
   const sid = getSessionId(req);
   await clearSession(res, sid);
-
-  const endSessionUrl = oidc.buildEndSessionUrl(config, {
-    client_id: process.env.REPL_ID!,
-    post_logout_redirect_uri: origin,
-  });
-
-  res.redirect(endSessionUrl.href);
+  res.redirect("/");
 });
 
 router.post("/mobile-auth/token-exchange", async (req: Request, res: Response) => {
@@ -257,7 +248,7 @@ router.post("/mobile-auth/token-exchange", async (req: Request, res: Response) =
       },
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expires_at: tokens.expiresIn() ? now + tokens.expiresIn()! : claims.exp,
+      expires_at: now + Math.floor(SESSION_TTL / 1000),
     };
 
     const sid = await createSession(sessionData);
