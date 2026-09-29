@@ -1,3 +1,4 @@
+import { CommunityGate, needsCommunityGate, type CommunityStatus } from "./community-gate";
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Store, Home, MapPin, MessageCircle, User, Shield, Car } from "lucide-react";
@@ -48,6 +49,17 @@ export function Layout({ children }: { children: ReactNode }) {
     enabled: isAuthenticated,
   });
   const pendingCount = pendingCountData?.count ?? 0;
+
+  const { data: community, isLoading: communityLoading, refetch: refetchCommunity } = useQuery({
+    queryKey: ["community-status"],
+    queryFn: async (): Promise<CommunityStatus> => {
+      const res = await fetch("/api/community/status", { credentials: "include" });
+      if (!res.ok) throw new Error("community-status");
+      return res.json();
+    },
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+  });
 
   const { data: navFlags } = useQuery({
     queryKey: ["nav-flags"],
@@ -242,6 +254,10 @@ export function Layout({ children }: { children: ReactNode }) {
 
       </div>
     );
+  }
+
+  if (communityLoading || needsCommunityGate(community)) {
+    return <CommunityGate status={community} loading={communityLoading} onDone={() => { refetchCommunity(); }} />;
   }
 
   const navItems = [

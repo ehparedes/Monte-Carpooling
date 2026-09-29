@@ -40,6 +40,22 @@ router.post("/ratings", async (req, res) => {
     return;
   }
 
+  // Solo pueden calificarse quienes compartieron el viaje: pasajeros al conductor y conductor a pasajeros.
+  const raterId = profile[0].id;
+  const ratedId = Number(ratedUserId);
+  const driverId = trip[0].driverId;
+  const confirmed = await db.select({ passengerId: bookingsTable.passengerId }).from(bookingsTable)
+    .where(and(eq(bookingsTable.tripId, trip[0].id), eq(bookingsTable.status, "confirmed")));
+  const participants = new Set<number>([driverId, ...confirmed.map((b) => b.passengerId)]);
+  if (!participants.has(raterId) || !participants.has(ratedId) || raterId === ratedId) {
+    res.status(403).json({ error: "Solo podés calificar a quienes viajaron con vos en este viaje" });
+    return;
+  }
+  if (raterId !== driverId && ratedId !== driverId) {
+    res.status(403).json({ error: "Los pasajeros califican al conductor" });
+    return;
+  }
+
   const existingRating = await db.select().from(ratingsTable).where(
     and(
       eq(ratingsTable.tripId, tripId),

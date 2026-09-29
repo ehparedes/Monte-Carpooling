@@ -16,6 +16,9 @@ import Terms from "@/pages/terms";
 import SolicitarViaje from "@/pages/solicitar-viaje";
 import Guia from "@/pages/guia";
 import AdminSponsors from "@/pages/admin-sponsors";
+import AdminComunidad from "@/pages/admin-comunidad";
+import Invitacion from "@/pages/invitacion";
+import Invitar from "@/pages/invitar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,9 +39,12 @@ function Router() {
       <Route path="/chat" component={ChatList} />
       <Route path="/chat/:id" component={ChatThread} />
       <Route path="/profile" component={Profile} />
+      <Route path="/admin/comunidad" component={AdminComunidad} />
       <Route path="/admin/sponsors" component={AdminSponsors} />
       <Route path="/admin" component={AdminPanel} />
       <Route path="/guia" component={Guia} />
+      <Route path="/i/:code" component={Invitacion} />
+      <Route path="/invitar" component={Invitar} />
       <Route path="/terms" component={Terms} />
       <Route path="/solicitar-viaje" component={SolicitarViaje} />
       <Route component={NotFound} />

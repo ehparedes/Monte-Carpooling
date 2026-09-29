@@ -58,6 +58,8 @@ export default function TripDetail() {
   const [ratingStars, setRatingStars] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
   const [ratingDone, setRatingDone] = useState(false);
+  const [ratedIds, setRatedIds] = useState<number[]>([]);
+  const [ratingTarget, setRatingTarget] = useState<number | null>(null);
   const [rejectModalBookingId, setRejectModalBookingId] = useState<number | null>(null);
   const [selectedReason, setSelectedReason] = useState(REJECTION_REASONS[0]);
   const [customReason, setCustomReason] = useState("");
@@ -182,8 +184,9 @@ export default function TripDetail() {
       toast({ variant: "destructive", title: "Seleccioná al menos 1 estrella" });
       return;
     }
+    const pendingPassengers = (tripDetail.bookings ?? []).filter(b => b.status === "confirmed" && !ratedIds.includes(b.passengerId));
     const ratedUserId = isDriver
-      ? tripDetail.bookings?.find(b => b.status === "confirmed")?.passengerId
+      ? (ratingTarget ?? pendingPassengers[0]?.passengerId)
       : tripDetail.driverId;
 
     if (!ratedUserId) return;
@@ -193,7 +196,17 @@ export default function TripDetail() {
       {
         onSuccess: () => {
           toast({ title: "¡Gracias por tu calificación!" });
-          setRatingDone(true);
+          if (isDriver) {
+            const next = [...ratedIds, ratedUserId as number];
+            setRatedIds(next);
+            setRatingStars(0);
+            setRatingComment("");
+            setRatingTarget(null);
+            const left = (tripDetail.bookings ?? []).filter(b => b.status === "confirmed" && !next.includes(b.passengerId));
+            if (left.length === 0) setRatingDone(true);
+          } else {
+            setRatingDone(true);
+          }
         },
         onError: (err: any) => {
           const msg = err?.response?.data?.error || err.message;
@@ -340,6 +353,24 @@ export default function TripDetail() {
               <Star className="w-5 h-5 text-amber-500" /> Calificá este viaje
             </h3>
             <p className="text-sm text-amber-700 mb-4">Tu opinión ayuda a la comunidad.</p>
+            {isDriver && (() => {
+              const opts = (tripDetail.bookings ?? []).filter(b => b.status === "confirmed" && !ratedIds.includes(b.passengerId));
+              if (opts.length > 1) {
+                return (
+                  <select
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                    value={ratingTarget ?? opts[0].passengerId}
+                    onChange={e => setRatingTarget(Number(e.target.value))}
+                  >
+                    {opts.map(b => <option key={b.passengerId} value={b.passengerId}>{(b as any).passengerName || "Pasajero"}</option>)}
+                  </select>
+                );
+              }
+              if (opts.length === 1) {
+                return <p className="text-sm text-muted-foreground">Calificando a {(opts[0] as any).passengerName || "tu pasajero"}</p>;
+              }
+              return null;
+            })()}
             <StarRating value={ratingStars} onChange={setRatingStars} />
             <textarea
               value={ratingComment}

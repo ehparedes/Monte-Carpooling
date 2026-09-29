@@ -11,10 +11,13 @@ import pushRouter from "./push";
 import tripRequestsRouter from "./trip-requests";
 import storageRouter from "./storage";
 import sponsorsRouter from "./sponsors";
+import communityRouter from "./community";
+import { communityGate } from "../middlewares/communityGate";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(communityGate);
 router.use(authRouter);
 router.use(usersRouter);
 router.use(tripsRouter);
@@ -26,5 +29,6 @@ router.use(pushRouter);
 router.use(tripRequestsRouter);
 router.use(storageRouter);
 router.use(sponsorsRouter);
+router.use(communityRouter);
 
 export default router;

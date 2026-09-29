@@ -16,6 +16,7 @@ async function getOrCreateProfile(replitUserId: string, username: string, firstN
       firstName: firstName ?? null,
       lastName: lastName ?? null,
       avatarUrl: avatarUrl ?? dicebearUrl,
+      memberStatus: "pending",
     }).returning();
     return inserted[0];
   }

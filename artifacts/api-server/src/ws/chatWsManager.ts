@@ -63,6 +63,11 @@ export function setupChatWs(server: Server) {
       return;
     }
 
+    if (profile[0].memberStatus !== "active" && !profile[0].isAdmin) {
+      rawWs.close(1008, "Forbidden");
+      return;
+    }
+
     // Solo el conductor o un pasajero con reserva confirmada (mismo criterio que chat.ts)
     const profileId = profile[0].id;
     const [trip] = await db.select({ driverId: tripsTable.driverId }).from(tripsTable)

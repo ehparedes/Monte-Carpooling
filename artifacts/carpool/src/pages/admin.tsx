@@ -42,6 +42,7 @@ export default function AdminPanel() {
         <header className="mb-6 mt-4">
           <h1 className="text-3xl font-extrabold text-foreground">Panel de administración</h1>
           <a href="/admin/sponsors" className="mt-3 inline-block rounded-xl bg-[#1A8EA3] px-4 py-2 text-sm font-semibold text-white">Gestionar sponsors</a>
+          <a href="/admin/comunidad" className="mt-3 ml-2 inline-block rounded-xl border border-[#1A8EA3] px-4 py-2 text-sm font-semibold text-[#1A8EA3]">Comunidad</a>
         </header>
 
         <div className="flex bg-muted/50 p-1.5 rounded-2xl mb-6">
