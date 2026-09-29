@@ -1,4 +1,4 @@
-const CACHE_NAME = "monte-carpooling-v3";
+const CACHE_NAME = "monte-carpooling-v4";
 const STATIC_ASSETS = ["/", "/manifest.json", "/images/logo-mark.png"];
 
 self.addEventListener("install", (event) => {
@@ -21,25 +21,57 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
   if (request.method !== "GET") return;
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
   if (url.pathname.startsWith("/ws/")) return;
   if (url.pathname.includes("hot-update")) return;
 
+  // Páginas: siempre del servidor; el caché solo se usa si no hay conexión.
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  // Assets con nombre versionado (index-XXXX.js): nunca cambian, caché primero.
+  if (url.pathname.startsWith("/assets/")) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetchAndCache(request))
+    );
+    return;
+  }
+
+  // Resto (imágenes, manifest): copia guardada y se actualiza por detrás.
   event.respondWith(
     caches.match(request).then((cached) => {
-      const networkFetch = fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || networkFetch;
+      const network = fetchAndCache(request).catch(() => cached);
+      return cached || network;
     })
   );
 });
+
+function fetchAndCache(request) {
+  return fetch(request).then((response) => {
+    if (response.ok) {
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+    }
+    return response;
+  });
+}
+
+async function networkFirstNavigation(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put("/", clone));
+    }
+    return response;
+  } catch {
+    const cached = (await caches.match(request)) || (await caches.match("/"));
+    return cached || Response.error();
+  }
+}
 
 /* ===== PUSH NOTIFICATIONS ===== */
 self.addEventListener("push", (event) => {
