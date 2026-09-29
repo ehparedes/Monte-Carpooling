@@ -1,3 +1,4 @@
+import SponsorSlot from "@/components/sponsor-slot";
 import { Layout } from "@/components/layout";
 import { TripCard } from "@/components/trip-card";
 import { Button } from "@/components/ui/button";
@@ -430,6 +431,12 @@ export default function TripDetail() {
       </Dialog>
 
       {/* Barra de acción fija abajo */}
+      {(isDriver || myBooking) && tripDetail.status === "scheduled" && (
+        <SponsorSlot slot="meeting_point" zone={tripDetail.origin} className="my-4" />
+      )}
+      {isCompleted && (isDriver || myBooking) && (
+        <SponsorSlot slot="trip_coupon" className="my-4" />
+      )}
       {!isDriver && tripDetail.status === "scheduled" && (
         <div className="fixed bottom-[80px] left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border z-40 max-w-md mx-auto">
           {hasBooked ? (

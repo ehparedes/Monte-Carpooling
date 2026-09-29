@@ -1,3 +1,4 @@
+import SponsorSlot from "@/components/sponsor-slot";
 import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { TripCard } from "@/components/trip-card";
@@ -445,6 +446,7 @@ export default function Home() {
               ) : null}
             </div>
 
+            <SponsorSlot slot="home_banner" className="mb-4" />
             <div className="space-y-5">
               {isLoadingTrips ? (
                 Array.from({ length: 3 }).map((_, i) => (
