@@ -36,12 +36,6 @@ export function Layout({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading, login } = useAuth();
   const [location] = useLocation();
   const [showLoginExplainer, setShowLoginExplainer] = useState(false);
-  const [showTesterForm, setShowTesterForm] = useState(false);
-  const [testerName, setTesterName] = useState("");
-  const [testerEmail, setTesterEmail] = useState("");
-  const [testerPasscode, setTesterPasscode] = useState("");
-  const [testerError, setTesterError] = useState("");
-  const [testerLoading, setTesterLoading] = useState(false);
 
   const { data: pendingCountData } = useQuery({
     queryKey: ["pending-count"],
@@ -54,33 +48,6 @@ export function Layout({ children }: { children: ReactNode }) {
     enabled: isAuthenticated,
   });
   const pendingCount = pendingCountData?.count ?? 0;
-
-  const handleTesterLogin = async () => {
-    setTesterError("");
-    if (!testerName.trim() || !testerEmail.trim() || !testerPasscode.trim()) {
-      setTesterError("Completá todos los campos");
-      return;
-    }
-    setTesterLoading(true);
-    try {
-      const res = await fetch("/api/auth/test-login", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: testerName.trim(), email: testerEmail.trim(), passcode: testerPasscode.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setTesterError(data.error || "Error al ingresar");
-        return;
-      }
-      window.location.reload();
-    } catch {
-      setTesterError("Error de conexión, intentá de nuevo");
-    } finally {
-      setTesterLoading(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -186,55 +153,6 @@ export function Layout({ children }: { children: ReactNode }) {
             ))}
           </div>
 
-          {/* Acceso para testers */}
-          {!showTesterForm ? (
-            <button
-              onClick={() => setShowTesterForm(true)}
-              className="w-full text-white/30 text-xs py-1 underline underline-offset-2 text-center"
-            >
-              ¿Sos tester? Ingresá aquí
-            </button>
-          ) : (
-            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <div className="flex items-center justify-between">
-                <p className="text-white/60 text-xs font-bold uppercase tracking-wide">Acceso de tester</p>
-                <button onClick={() => setShowTesterForm(false)} className="text-white/30 text-xs">✕ Cerrar</button>
-              </div>
-              <input
-                type="text"
-                placeholder="Tu nombre completo"
-                value={testerName}
-                onChange={(e) => setTesterName(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm outline-none focus:border-white/40"
-              />
-              <input
-                type="email"
-                placeholder="Tu correo electrónico"
-                value={testerEmail}
-                onChange={(e) => setTesterEmail(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm outline-none focus:border-white/40"
-              />
-              <input
-                type="text"
-                placeholder="Código de acceso"
-                value={testerPasscode}
-                onChange={(e) => setTesterPasscode(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm outline-none focus:border-white/40 font-mono tracking-widest"
-              />
-              {testerError && (
-                <p className="text-red-400 text-xs text-center">{testerError}</p>
-              )}
-              <button
-                onClick={handleTesterLogin}
-                disabled={testerLoading}
-                className="w-full py-3 rounded-xl font-bold text-sm text-white active:scale-95 transition-transform disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #7A3428, #C22020)" }}
-              >
-                {testerLoading ? "Ingresando..." : "Entrar como tester →"}
-              </button>
-            </div>
-          )}
-
           {/* Explainer antes del login */}
           {showLoginExplainer && (
             <div
@@ -262,13 +180,13 @@ export function Layout({ children }: { children: ReactNode }) {
                   {[
                     {
                       icon: "👤",
-                      title: "Solo necesitamos tu nombre y correo",
+                      title: "Entrás con tu cuenta de Google",
                       desc: "Para que los demás usuarios te reconozcan. No compartimos tus datos con nadie ni los usamos para otra cosa.",
                     },
                     {
                       icon: "🌐",
-                      title: "Va a aparecer una pantalla en inglés — es normal",
-                      desc: "Es el sistema de seguridad que usamos. Tocá el botón azul que dice \"Allow\" (significa \"Permitir\") y listo, ya entrás.",
+                      title: "Elegí con qué cuenta entrar",
+                      desc: "Se abre la pantalla de Google para elegir tu cuenta. Nunca vemos ni guardamos tu contraseña.",
                     },
                     {
                       icon: "🏘️",
@@ -293,6 +211,12 @@ export function Layout({ children }: { children: ReactNode }) {
                 >
                   Entendido, ingresar →
                 </button>
+
+                <p className="text-white/40 text-[11px] text-center leading-relaxed">
+                  Al ingresar aceptás los{" "}
+                  <a href="/terminos.html" className="underline">términos</a> y la{" "}
+                  <a href="/privacidad.html" className="underline">política de privacidad</a>.
+                </p>
 
                 <button
                   onClick={() => setShowLoginExplainer(false)}
