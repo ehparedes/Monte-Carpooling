@@ -131,6 +131,20 @@ router.post("/sponsors/events", async (req: Request, res: Response) => {
   res.status(204).end();
 });
 
+router.get("/sponsors/nav", async (req: Request, res: Response) => {
+  let isAdmin = false;
+  if (req.isAuthenticated()) {
+    const p = await db.select({ isAdmin: profilesTable.isAdmin }).from(profilesTable)
+      .where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
+    isAdmin = !!p[0]?.isAdmin;
+  }
+  const [g] = await db.select({ n: sql<number>`count(*)::int` }).from(sponsorPlacementsTable)
+    .innerJoin(sponsorsTable, eq(sponsorPlacementsTable.sponsorId, sponsorsTable.id))
+    .where(and(activeNow(), inArray(sponsorPlacementsTable.slot, ["guide_listing", "guide_featured"])));
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ isAdmin, hasGuide: (g?.n ?? 0) > 0 });
+});
+
 // ---------- Admin ----------
 
 const optText = (max: number) => z.string().trim().max(max).nullish().transform((v) => (v ? v : null));

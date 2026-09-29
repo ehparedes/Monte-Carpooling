@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, MapPin, MessageCircle, User, Shield, Car } from "lucide-react";
+import { Store, Home, MapPin, MessageCircle, User, Shield, Car } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { motion, AnimatePresence } from "framer-motion";
 import { OnboardingModal } from "./onboarding-modal";
@@ -48,6 +48,17 @@ export function Layout({ children }: { children: ReactNode }) {
     enabled: isAuthenticated,
   });
   const pendingCount = pendingCountData?.count ?? 0;
+
+  const { data: navFlags } = useQuery({
+    queryKey: ["nav-flags"],
+    queryFn: async () => {
+      const res = await fetch("/api/sponsors/nav", { credentials: "include" });
+      if (!res.ok) return { isAdmin: false, hasGuide: false };
+      return res.json() as Promise<{ isAdmin: boolean; hasGuide: boolean }>;
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (isLoading) {
     return (
@@ -241,7 +252,10 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/profile", icon: User, label: "Perfil" },
   ];
 
-  if (user?.roles?.includes("admin") || (user as any)?.isAdmin) {
+  if (navFlags?.hasGuide) {
+    navItems.push({ href: "/guia", icon: Store, label: "Guía" });
+  }
+  if (user?.roles?.includes("admin") || (user as any)?.isAdmin || navFlags?.isAdmin) {
     navItems.push({ href: "/admin", icon: Shield, label: "Admin" });
   }
 
