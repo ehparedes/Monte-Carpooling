@@ -14,6 +14,8 @@ import ChatThread from "@/pages/chat-thread";
 import AdminPanel from "@/pages/admin";
 import Terms from "@/pages/terms";
 import SolicitarViaje from "@/pages/solicitar-viaje";
+import Guia from "@/pages/guia";
+import AdminSponsors from "@/pages/admin-sponsors";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,7 +36,9 @@ function Router() {
       <Route path="/chat" component={ChatList} />
       <Route path="/chat/:id" component={ChatThread} />
       <Route path="/profile" component={Profile} />
+      <Route path="/admin/sponsors" component={AdminSponsors} />
       <Route path="/admin" component={AdminPanel} />
+      <Route path="/guia" component={Guia} />
       <Route path="/terms" component={Terms} />
       <Route path="/solicitar-viaje" component={SolicitarViaje} />
       <Route component={NotFound} />
