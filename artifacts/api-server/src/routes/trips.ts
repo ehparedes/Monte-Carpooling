@@ -163,7 +163,19 @@ router.post("/trips", async (req, res) => {
 
   const profile = await db.select().from(profilesTable).where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
   if (profile.length === 0 || !profile[0].isDriver) {
-    res.status(403).json({ error: "Only drivers can create trips" });
+    res.status(403).json({ error: "Para publicar viajes, activá la opción de conductor en tu perfil." });
+    return;
+  }
+
+  const missingVehicle = [
+    !profile[0].vehicleModel?.trim() && "modelo",
+    !profile[0].vehicleColor?.trim() && "color",
+    !profile[0].licensePlate?.trim() && "patente",
+  ].filter(Boolean);
+  if (missingVehicle.length > 0) {
+    res.status(400).json({
+      error: `Antes de publicar, cargá en tu perfil los datos del auto que faltan: ${missingVehicle.join(", ")}.`,
+    });
     return;
   }
 
