@@ -1,6 +1,6 @@
 {
   "packageId": "app.monte.carpooling",
-  "host": "monte-carpooling.replit.app",
+  "host": "montecarpooling.elherlab.com",
   "name": "Carpooling Monte",
   "launcherName": "Monte",
   "display": "standalone",
@@ -13,9 +13,9 @@
   "backgroundColor": "#0a1219",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://monte-carpooling.replit.app/icon-512.png",
-  "maskableIconUrl": "https://monte-carpooling.replit.app/icon-512.png",
-  "monochromeIconUrl": "https://monte-carpooling.replit.app/icon-512.png",
+  "iconUrl": "https://montecarpooling.elherlab.com/icon-512.png",
+  "maskableIconUrl": "https://montecarpooling.elherlab.com/icon-512.png",
+  "monochromeIconUrl": "https://montecarpooling.elherlab.com/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
@@ -25,10 +25,10 @@
   "appVersionName": "1.0.0",
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://monte-carpooling.replit.app/manifest.json",
+  "webManifestUrl": "https://montecarpooling.elherlab.com/manifest.json",
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://monte-carpooling.replit.app/",
+  "fullScopeUrl": "https://montecarpooling.elherlab.com/",
   "minSdkVersion": 21,
   "targetSdkVersion": 34,
   "features": {

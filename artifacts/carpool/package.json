@@ -9,7 +9,7 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build-android": "bubblewrap build --manifest ./twa-manifest.json",
-    "init-android": "bubblewrap init --manifest https://monte-carpooling.replit.app/manifest.json"
+    "init-android": "bubblewrap init --manifest https://montecarpooling.elherlab.com/manifest.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
