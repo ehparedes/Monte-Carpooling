@@ -1,130 +1,137 @@
-import { Router, type IRouter, type Request, type Response } from "express";
-import { Readable } from "stream";
-import {
-  RequestUploadUrlBody,
-  RequestUploadUrlResponse,
-} from "@workspace/api-zod";
-import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
-import { ObjectPermission } from "../lib/objectAcl";
+import express, { Router, type IRouter, type Request, type Response } from "express";
+import { randomUUID } from "crypto";
+import fs from "fs";
+import path from "path";
+import { RequestUploadUrlBody, RequestUploadUrlResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-const objectStorageService = new ObjectStorageService();
 
-/**
- * POST /storage/uploads/request-url
- *
- * Request a presigned URL for file upload.
- * The client sends JSON metadata (name, size, contentType) — NOT the file.
- * Then uploads the file directly to the returned presigned URL.
- */
-router.post("/storage/uploads/request-url", async (req: Request, res: Response) => {
+const UPLOAD_ROOT = process.env.UPLOAD_DIR || "/var/www/monte-uploads";
+const UPLOADS_DIR = path.join(UPLOAD_ROOT, "uploads");
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+const MAX_BYTES = 5 * 1024 * 1024;
+const TICKET_TTL_MS = 10 * 60 * 1000;
+const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+const TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+};
+
+type Ticket = { userId: string; expires: number };
+const tickets = new Map<string, Ticket>();
+
+function pruneTickets() {
+  const now = Date.now();
+  for (const [id, t] of tickets) if (t.expires < now) tickets.delete(id);
+}
+
+function detectImage(buf: Buffer): string | null {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return "png";
+  if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") return "webp";
+  if (buf.toString("ascii", 0, 4) === "GIF8") return "gif";
+  return null;
+}
+
+function getOrigin(req: Request): string {
+  const proto = (req.headers["x-forwarded-proto"] as string) || "https";
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host || "localhost";
+  return `${proto}://${host}`;
+}
+
+router.post("/storage/uploads/request-url", (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const parsed = RequestUploadUrlBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Missing or invalid required fields" });
     return;
   }
 
-  try {
-    const { name, size, contentType } = parsed.data;
-
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
-
-    res.json(
-      RequestUploadUrlResponse.parse({
-        uploadURL,
-        objectPath,
-        metadata: { name, size, contentType },
-      }),
-    );
-  } catch (error) {
-    console.error("Error generating upload URL:", error);
-    res.status(500).json({ error: "Failed to generate upload URL" });
+  const { name, size, contentType } = parsed.data;
+  if (!Object.values(TYPES).includes(contentType)) {
+    res.status(415).json({ error: "Formato no soportado. Usá JPG, PNG o WebP." });
+    return;
   }
+  if (size > MAX_BYTES) {
+    res.status(413).json({ error: "La imagen no puede superar 5MB" });
+    return;
+  }
+
+  pruneTickets();
+  const id = randomUUID();
+  tickets.set(id, { userId: req.user.id, expires: Date.now() + TICKET_TTL_MS });
+
+  res.json(
+    RequestUploadUrlResponse.parse({
+      uploadURL: `${getOrigin(req)}/api/storage/uploads/${id}`,
+      objectPath: `/objects/uploads/${id}`,
+      metadata: { name, size, contentType },
+    }),
+  );
 });
 
-/**
- * GET /storage/public-objects/*
- *
- * Serve public assets from PUBLIC_OBJECT_SEARCH_PATHS.
- * These are unconditionally public — no authentication or ACL checks.
- * IMPORTANT: Always provide this endpoint when object storage is set up.
- */
-router.get("/storage/public-objects/*filePath", async (req: Request, res: Response) => {
-  try {
-    const raw = req.params.filePath;
-    const filePath = Array.isArray(raw) ? raw.join("/") : raw;
-    const file = await objectStorageService.searchPublicObject(filePath);
-    if (!file) {
-      res.status(404).json({ error: "File not found" });
+router.put(
+  "/storage/uploads/:id",
+  express.raw({ type: () => true, limit: MAX_BYTES }),
+  (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const ticket = tickets.get(id);
+
+    if (!ID_RE.test(id) || !ticket || ticket.expires < Date.now()) {
+      res.status(403).json({ error: "El permiso de subida venció. Probá de nuevo." });
+      return;
+    }
+    if (!req.isAuthenticated() || req.user.id !== ticket.userId) {
+      res.status(403).json({ error: "Forbidden" });
       return;
     }
 
-    const response = await objectStorageService.downloadObject(file);
-
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-
-    if (response.body) {
-      const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
-      nodeStream.pipe(res);
-    } else {
-      res.end();
-    }
-  } catch (error) {
-    console.error("Error serving public object:", error);
-    res.status(500).json({ error: "Failed to serve public object" });
-  }
-});
-
-/**
- * GET /storage/objects/*
- *
- * Serve object entities from PRIVATE_OBJECT_DIR.
- * These are served from a separate path from /public-objects and can optionally
- * be protected with authentication or ACL checks based on the use case.
- */
-router.get("/storage/objects/*path", async (req: Request, res: Response) => {
-  try {
-    const raw = req.params.path;
-    const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
-    const objectPath = `/objects/${wildcardPath}`;
-    const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
-
-    // --- Protected route example (uncomment when using replit-auth) ---
-    // if (!req.isAuthenticated()) {
-    //   res.status(401).json({ error: "Unauthorized" });
-    //   return;
-    // }
-    // const canAccess = await objectStorageService.canAccessObjectEntity({
-    //   userId: req.user.id,
-    //   objectFile,
-    //   requestedPermission: ObjectPermission.READ,
-    // });
-    // if (!canAccess) {
-    //   res.status(403).json({ error: "Forbidden" });
-    //   return;
-    // }
-
-    const response = await objectStorageService.downloadObject(objectFile);
-
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-
-    if (response.body) {
-      const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
-      nodeStream.pipe(res);
-    } else {
-      res.end();
-    }
-  } catch (error) {
-    console.error("Error serving object:", error);
-    if (error instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "Object not found" });
+    const buf = req.body as Buffer;
+    if (!Buffer.isBuffer(buf) || buf.length === 0) {
+      res.status(400).json({ error: "Archivo vacío" });
       return;
     }
-    res.status(500).json({ error: "Failed to serve object" });
+
+    const ext = detectImage(buf);
+    if (!ext) {
+      res.status(415).json({ error: "El archivo no es una imagen válida" });
+      return;
+    }
+
+    fs.writeFileSync(path.join(UPLOADS_DIR, `${id}.${ext}`), buf);
+    tickets.delete(id);
+    res.status(200).json({ ok: true });
+  },
+);
+
+router.get("/storage/objects/uploads/:file", (req: Request, res: Response) => {
+  const id = String(req.params.file);
+  if (!ID_RE.test(id)) {
+    res.status(404).json({ error: "Object not found" });
+    return;
   }
+
+  for (const [ext, mime] of Object.entries(TYPES)) {
+    const filePath = path.join(UPLOADS_DIR, `${id}.${ext}`);
+    if (fs.existsSync(filePath)) {
+      res.type(mime);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.sendFile(filePath);
+      return;
+    }
+  }
+
+  res.status(404).json({ error: "Object not found" });
 });
 
 export default router;
