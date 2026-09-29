@@ -1,3 +1,4 @@
+import "./install-prompt-mount";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";

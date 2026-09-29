@@ -1,4 +1,3 @@
-
 {
   "id": "/",
   "name": "Carpooling Monte",
@@ -11,7 +10,11 @@
   "theme_color": "#1A8EA3",
   "lang": "es-AR",
   "orientation": "portrait",
-  "categories": ["travel", "lifestyle", "social"],
+  "categories": [
+    "travel",
+    "lifestyle",
+    "social"
+  ],
   "icons": [
     {
       "src": "/images/logo-mark.png",
@@ -49,13 +52,23 @@
     {
       "name": "Buscar viaje",
       "url": "/",
-      "icons": [{ "src": "/images/logo-mark.png", "sizes": "96x96" }],
+      "icons": [
+        {
+          "src": "/images/logo-mark.png",
+          "sizes": "96x96"
+        }
+      ],
       "description": "Buscar un viaje disponible"
     },
     {
       "name": "Publicar viaje",
       "url": "/create-trip",
-      "icons": [{ "src": "/images/logo-mark.png", "sizes": "96x96" }],
+      "icons": [
+        {
+          "src": "/images/logo-mark.png",
+          "sizes": "96x96"
+        }
+      ],
       "description": "Publicar un viaje como conductor"
     }
   ]
