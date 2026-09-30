@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Carpooling Monte",
-  "short_name": "Monte",
+  "name": "Monte Carpooling",
+  "short_name": "Monte Carpooling",
   "description": "Viajá en grupo, ahorrá dinero y conectate con tu comunidad en San Miguel del Monte y la Provincia de Buenos Aires.",
   "start_url": "/",
   "scope": "/",
@@ -17,34 +17,26 @@
   ],
   "icons": [
     {
-      "src": "/images/logo-mark.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "/images/logo-mark.png",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/images/logo-mark.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
   "screenshots": [],
