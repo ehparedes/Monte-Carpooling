@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { sendPushToProfile } from "./push";
 import { db } from "@workspace/db";
 import { profilesTable, tripsTable, bookingsTable, ratingsTable } from "@workspace/db/schema";
 import { eq, and, sql, avg, or } from "drizzle-orm";
@@ -220,18 +221,59 @@ router.patch("/trips/:tripId", async (req, res) => {
   }
 
   const profile = await db.select().from(profilesTable).where(eq(profilesTable.replitUserId, req.user.id)).limit(1);
-  if (profile.length === 0 || (profile[0].id !== trip[0].driverId && !profile[0].isAdmin)) {
-    res.status(403).json({ error: "Not authorized" });
+  const isDriverOrAdmin = profile[0].id === trip[0].driverId || profile[0].isAdmin;
+
+  // Para iniciar o terminar, el pasajero confirmado también puede
+  const { status } = req.body;
+  let isParticipant = isDriverOrAdmin;
+  if (!isParticipant && (status === "in_progress" || status === "completed")) {
+    const pBooking = await db.select().from(bookingsTable)
+      .where(and(eq(bookingsTable.tripId, tripId), eq(bookingsTable.passengerId, profile[0].id), eq(bookingsTable.status, "confirmed")))
+      .limit(1);
+    isParticipant = pBooking.length > 0;
+  }
+  if (!isParticipant) {
+    res.status(403).json({ error: "No tenés permiso para cambiar este viaje." });
     return;
   }
 
-  const { status } = req.body;
+  // Validar transiciones permitidas
+  const allowed: Record<string, string[]> = {
+    scheduled: ["in_progress", "cancelled"],
+    in_progress: ["completed"],
+  };
+  if (!allowed[trip[0].status]?.includes(status)) {
+    res.status(400).json({ error: `No se puede pasar de "${trip[0].status}" a "${status}".` });
+    return;
+  }
+
   const updated = await db.update(tripsTable)
     .set({ status, updatedAt: new Date() })
     .where(eq(tripsTable.id, tripId))
     .returning();
 
-  res.json(await tripWithDriverInfo(updated[0]));
+  const result = await tripWithDriverInfo(updated[0]);
+
+  // notifyParticipants
+  const actorName = `${profile[0].firstName ?? ""} ${profile[0].lastName ?? ""}`.trim() || profile[0].username;
+  const allBookings = await db.select().from(bookingsTable)
+    .where(and(eq(bookingsTable.tripId, tripId), eq(bookingsTable.status, "confirmed")));
+  const participantIds = [trip[0].driverId, ...allBookings.map(b => b.passengerId)]
+    .filter(id => id !== profile[0].id);
+
+  const msgs: Record<string, { title: string; body: string }> = {
+    in_progress: { title: "🚗 ¡Viaje iniciado!", body: `${actorName} marcó que el viaje ${trip[0].origin} → ${trip[0].destination} está en camino.` },
+    completed: { title: "🏁 Viaje terminado", body: `El viaje ${trip[0].origin} → ${trip[0].destination} terminó. ¡Calificá a tus compañeros de viaje!` },
+    cancelled: { title: "❌ Viaje cancelado", body: `${actorName} canceló el viaje ${trip[0].origin} → ${trip[0].destination}.` },
+  };
+  const msg = msgs[status];
+  if (msg) {
+    for (const pid of participantIds) {
+      sendPushToProfile(pid, { ...msg, url: `/trip/${tripId}` }).catch(() => {});
+    }
+  }
+
+  res.json(result);
 });
 
 router.delete("/trips/:tripId", async (req, res) => {

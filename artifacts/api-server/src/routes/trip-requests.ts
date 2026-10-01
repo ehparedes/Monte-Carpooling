@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { profilesTable, tripRequestsTable, tripRequestOffersTable } from "@workspace/db/schema";
+import { profilesTable, tripRequestsTable, tripRequestOffersTable, tripsTable, bookingsTable } from "@workspace/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { sendPushToProfile } from "./push";
 
@@ -217,19 +217,50 @@ router.patch("/trip-request-offers/:offerId/accept", async (req, res) => {
     .set({ status: "accepted" })
     .where(eq(tripRequestOffersTable.id, offerId));
 
+  // Rechazar las demás ofertas pendientes
+  await db.update(tripRequestOffersTable)
+    .set({ status: "rejected" })
+    .where(and(
+      eq(tripRequestOffersTable.tripRequestId, tripReq.id),
+      eq(tripRequestOffersTable.status, "pending"),
+    ));
+
   await db.update(tripRequestsTable)
     .set({ status: "matched" })
     .where(eq(tripRequestsTable.id, tripReq.id));
+
+  // Crear el viaje y la reserva confirmada
+  const driverProfile = await db.select().from(profilesTable).where(eq(profilesTable.id, offer.driverProfileId)).limit(1);
+  const [newTrip] = await db.insert(tripsTable).values({
+    driverId: offer.driverProfileId,
+    origin: tripReq.origin,
+    destination: tripReq.destination,
+    date: tripReq.date,
+    time: tripReq.time ?? "00:00",
+    availableSeats: Math.max(0, (driverProfile[0]?.totalSeats ?? 4) - tripReq.seats),
+    totalSeats: driverProfile[0]?.totalSeats ?? 4,
+    pricePerSeat: "0",
+    priceType: "free",
+    acceptsPackages: false,
+    status: "scheduled",
+  }).returning();
+
+  await db.insert(bookingsTable).values({
+    tripId: newTrip.id,
+    passengerId: tripReq.passengerId,
+    seatsBooked: tripReq.seats,
+    status: "confirmed",
+  });
 
   const passengerName = `${profile[0].firstName ?? ""} ${profile[0].lastName ?? ""}`.trim() || profile[0].username;
 
   await sendPushToProfile(offer.driverProfileId, {
     title: "✅ ¡Aceptaron tu oferta!",
-    body: `${passengerName} aceptó tu oferta para el viaje ${tripReq.origin} → ${tripReq.destination}. Coordiná los detalles.`,
-    url: "/",
+    body: `${passengerName} aceptó tu oferta para ${tripReq.origin} → ${tripReq.destination}. Ya podés ver el viaje en Mis viajes.`,
+    url: `/trip/${newTrip.id}`,
   }).catch(() => {});
 
-  res.json({ success: true });
+  res.json({ success: true, tripId: newTrip.id });
 });
 
 router.patch("/trip-request-offers/:offerId/reject", async (req, res) => {
