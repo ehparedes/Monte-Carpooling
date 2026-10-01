@@ -328,9 +328,13 @@ export default function Profile() {
         {/* Accesos rápidos */}
         <InviteCallout />
         <Link href="/como-funciona">
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 cursor-pointer">
-            <span className="font-bold text-sm">¿Cómo funciona?</span>
-            <span className="text-xs text-muted-foreground">Guía rápida</span>
+          <div className="flex items-center gap-3 rounded-2xl p-4 cursor-pointer text-white shadow-md transition-transform active:scale-[0.98]" style={{ background: "linear-gradient(135deg, #E85D2A, #D4A520)" }}>
+            <span className="text-2xl">📖</span>
+            <div className="flex-1">
+              <span className="font-extrabold text-sm">¿Cómo funciona esta app?</span>
+              <p className="text-xs text-white/80">Guía rápida para empezar</p>
+            </div>
+            <span className="text-xl text-white/80">›</span>
           </div>
         </Link>
         {profile?.isAdmin && (

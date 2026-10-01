@@ -60,7 +60,7 @@ export default function ComoFunciona() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
         <Link href="/" className="text-2xl leading-none text-muted-foreground" aria-label="Volver">←</Link>
-        <h1 className="text-lg font-bold">¿Cómo funciona?</h1>
+        <h1 className="text-lg font-bold">¿Cómo funciona esta app?</h1>
       </div>
 
       <div className="mx-auto max-w-md px-5 py-6 pb-24 space-y-4">
