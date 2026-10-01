@@ -14,6 +14,13 @@ import { getApiUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@workspace/replit-auth-web";
 
+function avatarSrc(url: string | null): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("/objects/")) return getApiUrl("api/storage") + url;
+  return url;
+}
+
+
 const MONTE_COLORS = ["#D4A520", "#7A3428", "#1A8EA3", "#C22020", "#3D7A28"];
 const MONTE_LETTERS = ["M", "o", "n", "t", "e"];
 
@@ -92,7 +99,7 @@ function TripRequestCard({
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           {request.passengerAvatarUrl ? (
-            <img src={request.passengerAvatarUrl} alt={request.passengerName} className="w-10 h-10 rounded-full object-cover" />
+            <img src={avatarSrc(request.passengerAvatarUrl)} alt={request.passengerName} className="w-10 h-10 rounded-full object-cover" />
           ) : (
             <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
               <Users className="w-5 h-5 text-accent" />
@@ -159,7 +166,7 @@ function TripRequestCard({
                             className="flex items-center gap-2 flex-1 active:opacity-70 transition-opacity text-left"
                           >
                             {offer.driverAvatarUrl ? (
-                              <img src={offer.driverAvatarUrl} alt={offer.driverName} className="w-9 h-9 rounded-full object-cover border-2 border-primary/20" />
+                              <img src={avatarSrc(offer.driverAvatarUrl)} alt={offer.driverName} className="w-9 h-9 rounded-full object-cover border-2 border-primary/20" />
                             ) : (
                               <div className="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center">
                                 <Car className="w-4 h-4 text-secondary" />
