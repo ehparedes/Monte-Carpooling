@@ -241,7 +241,7 @@ router.patch("/trip-request-offers/:offerId/accept", async (req, res) => {
     totalSeats: driverProfile[0]?.totalSeats ?? 4,
     pricePerSeat: "0",
     priceType: "free",
-    meetingPoint: null,
+    meetingPoint: '',
     acceptsPackages: false,
     status: "scheduled",
   }).returning();
