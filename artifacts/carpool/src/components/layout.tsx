@@ -178,6 +178,8 @@ export function Layout({ children }: { children: ReactNode }) {
 
           {/* privacidad-visible: links públicos para verificación de Google */}
           <div className="flex justify-center gap-4 text-white/40 text-xs">
+            <a href="/como-funciona" className="underline hover:text-white/60">¿Cómo funciona?</a>
+            <span>·</span>
             <a href="/privacidad.html" className="underline hover:text-white/60">Política de privacidad</a>
             <span>·</span>
             <a href="/terminos.html" className="underline hover:text-white/60">Términos de uso</a>
