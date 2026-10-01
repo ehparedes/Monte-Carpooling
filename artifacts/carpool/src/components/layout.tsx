@@ -144,7 +144,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {[
               { value: "Monte", label: "Punto de partida" },
               { value: "100%", label: "Gratuito" },
-              { value: "Seguro", label: "y verificado" },
+              { value: "Seguro", label: "Entre vecinos" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-white font-bold text-sm" style={{ fontFamily: "Outfit, sans-serif" }}>{stat.value}</p>
@@ -174,6 +174,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 <span className="text-white/50 text-[10px] text-center font-medium">{f.text}</span>
               </div>
             ))}
+          </div>
+
+          {/* privacidad-visible: links públicos para verificación de Google */}
+          <div className="flex justify-center gap-4 text-white/40 text-xs">
+            <a href="/privacidad.html" className="underline hover:text-white/60">Política de privacidad</a>
+            <span>·</span>
+            <a href="/terminos.html" className="underline hover:text-white/60">Términos de uso</a>
+            <span>·</span>
+            <a href="mailto:monte.carpooling@elherlab.com" className="underline hover:text-white/60">Contacto</a>
           </div>
 
           {/* Explainer antes del login */}
