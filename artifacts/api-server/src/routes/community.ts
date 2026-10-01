@@ -75,9 +75,17 @@ router.get("/community/status", async (req: Request, res: Response) => {
     const [inviter] = await db.select().from(profilesTable).where(eq(profilesTable.id, p.invitedById)).limit(1);
     if (inviter) invitedBy = fullName(inviter);
   }
+  const open = await db.select({ id: invitesTable.id }).from(invitesTable)
+    .where(and(
+      eq(invitesTable.createdById, p.id),
+      isNull(invitesTable.usedById),
+      eq(invitesTable.revoked, false),
+      sql`(${invitesTable.expiresAt} is null or ${invitesTable.expiresAt} > now())`,
+    ));
   res.setHeader("Cache-Control", "no-store");
   res.json({
     status: p.memberStatus,
+    openInvites: open.length,
     isAdmin: p.isAdmin,
     missing: missingProfileFields(p),
     invitedBy,

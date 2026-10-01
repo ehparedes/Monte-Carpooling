@@ -1,3 +1,4 @@
+import { InviteCallout } from "@/components/invite-callout";
 import { Layout } from "@/components/layout";
 import { useGetMyProfile, useUpdateMyProfile } from "@workspace/api-client-react";
 import { useAuth } from "@workspace/replit-auth-web";
@@ -325,12 +326,7 @@ export default function Profile() {
         </div>
 
         {/* Accesos rápidos */}
-        <Link href="/invitar">
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 cursor-pointer">
-            <span className="font-bold text-sm">Invitar vecinos</span>
-            <span className="text-xs text-muted-foreground">Compartí tu link</span>
-          </div>
-        </Link>
+        <InviteCallout />
         {profile?.isAdmin && (
           <Link href="/admin">
             <div className="bg-primary/10 border-2 border-primary/20 rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">

@@ -45,6 +45,9 @@ export default function Invitacion({ params }: { params: { code: string } }) {
             Al ingresar aceptás los <a href="/terminos.html" className="underline">términos</a> y la{" "}
             <a href="/privacidad.html" className="underline">política de privacidad</a>.
           </p>
+          <a href="/instalar" className="mt-4 block text-center text-sm font-semibold underline" style={{ color: "#1A8EA3" }}>
+            ¿Cómo instalo la app en mi celular?
+          </a>
         </>
       )}
 

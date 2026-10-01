@@ -19,6 +19,7 @@ import AdminSponsors from "@/pages/admin-sponsors";
 import AdminComunidad from "@/pages/admin-comunidad";
 import Invitacion from "@/pages/invitacion";
 import Invitar from "@/pages/invitar";
+import Instalar from "@/pages/instalar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/guia" component={Guia} />
       <Route path="/i/:code" component={Invitacion} />
       <Route path="/invitar" component={Invitar} />
+      <Route path="/instalar" component={Instalar} />
       <Route path="/terms" component={Terms} />
       <Route path="/solicitar-viaje" component={SolicitarViaje} />
       <Route component={NotFound} />

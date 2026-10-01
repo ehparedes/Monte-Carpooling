@@ -6,6 +6,7 @@ export interface CommunityStatus {
   missing: string[];
   invitedBy: string | null;
   invitesRemaining: number;
+  openInvites?: number;
   firstName: string | null;
   lastName: string | null;
   avatarUrl: string | null;

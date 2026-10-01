@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { sendPushToProfile } from "./push";
+import { sendPushToProfile } from "./push";
 import { db } from "@workspace/db";
 import { profilesTable, tripsTable, bookingsTable, ratingsTable } from "@workspace/db/schema";
 import { eq, and, sql, avg, or } from "drizzle-orm";
@@ -126,6 +127,15 @@ router.get("/trips/:tripId", async (req, res) => {
   if (trip.length === 0) {
     res.status(404).json({ error: "Trip not found" });
     return;
+  }
+
+  // autoCloseStale: cerrar viajes viejos que nadie marcó como terminados
+  if (trip[0].status === "scheduled" || trip[0].status === "in_progress") {
+    const tripDate = new Date(`${trip[0].date}T${trip[0].time || "00:00"}:00-03:00`);
+    if (!isNaN(tripDate.getTime()) && Date.now() - tripDate.getTime() > 6 * 60 * 60 * 1000) {
+      await db.update(tripsTable).set({ status: "completed", updatedAt: new Date() }).where(eq(tripsTable.id, tripId));
+      trip[0].status = "completed";
+    }
   }
 
   const bookings = await db.select().from(bookingsTable).where(

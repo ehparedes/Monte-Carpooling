@@ -178,6 +178,21 @@ export default function MyTrips() {
                           </button>
                         )}
                       </div>
+                      {/* iniciar-pasajero */}
+                      {booking.status === "confirmed" && booking.trip?.status === "in_progress" && (
+                        <button
+                          className="w-full text-sm py-2 rounded-xl font-semibold bg-green-600 text-white mt-2"
+                          onClick={() => updateStatus({ tripId: booking.trip.id, data: { status: "completed" } }, { onSuccess: () => refetchPassenger() })}>
+                          ✅ Viaje terminado
+                        </button>
+                      )}
+                      {booking.status === "confirmed" && booking.trip?.status === "scheduled" && (
+                        <button
+                          className="w-full text-sm py-2 rounded-xl font-semibold bg-blue-600 text-white mt-2"
+                          onClick={() => updateStatus({ tripId: booking.trip.id, data: { status: "in_progress" } }, { onSuccess: () => refetchPassenger() })}>
+                          🚗 Iniciar viaje
+                        </button>
+                      )}
                       {booking.status === "confirmed" && (
                         <Link href={`/chat/${booking.trip?.id}`}>
                           <Button size="sm" className="w-full gap-2 bg-primary text-white rounded-xl">
